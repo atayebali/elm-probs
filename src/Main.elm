@@ -7,16 +7,13 @@ import Random
 
 ---- MODEL ----
 
-
 type alias Model =
     {
       state : String
-      , problems : ProblemSet
-      , random : Int
+      , problems : List Problem
+      , random1 : Int
+      , random2 : Int
     }
-
-type alias ProblemSet =
-    { set : List Problem }
 
 type alias Problem =
     {
@@ -25,11 +22,6 @@ type alias Problem =
 
     }
 
-initProblemSet : ProblemSet
-initProblemSet =
-    {
-       set = buildProblemSet
-    }
 
 buildProblemSet : List Problem
 buildProblemSet =
@@ -40,36 +32,45 @@ init : ( Model, Cmd Msg )
 init =
     ( {
         state = "NOT STARTED"
-        , problems =  initProblemSet
-        , random = 10000
+        , problems =  []
+        , random1 = 10000
+        , random2 = 20000
          }, Cmd.none )
 
-
-
 ---- UPDATE ----
-
-
 type Msg
     = START
-    | NewRandom Int
+    | NewRandom1 Int
+    | NewRandom2 Int
     | END
     | NoOp
+
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         START ->
-          ( { model | state = "STARTED" }, Random.generate NewRandom (Random.int 1 9) )
+          ( { model | state = "STARTED" }, Random.generate NewRandom1 (Random.int 1 9) )
 
-        NewRandom num ->
-            ({model | random = num} , Cmd.none)
+        NewRandom1 num ->
+            ({model | random1 = num} , Random.generate NewRandom2 (Random.int 1 9))
+
+        NewRandom2 num ->
+            let
+               problem =  { operands = [toString model.random1, toString num], operator = "-" }
+               new_problems = problem :: model.problems
+            in
+              ({model | problems =  new_problems  } , Cmd.none)
 
         END ->
            ( { model | state = "END" }, Cmd.none)
 
         _ ->
             (model, Cmd.none)
+
+
+
 ---- VIEW ----
 
 
