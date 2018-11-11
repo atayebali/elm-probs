@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Html exposing (Html, text, div, h1, button, p, br)
+import Html exposing (Html, text, div, h1, button, p, br, ul, li)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Random
@@ -40,6 +40,7 @@ init =
 ---- UPDATE ----
 type Msg
     = START
+    | ADD
     | NewRandom1 Int
     | NewRandom2 Int
     | END
@@ -64,7 +65,7 @@ update msg model =
               ({model | problems =  new_problems  } , Cmd.none)
 
         END ->
-           ( { model | state = "END" }, Cmd.none)
+           ( { model | state = "END", problems = [] }, Cmd.none)
 
         _ ->
             (model, Cmd.none)
@@ -119,12 +120,20 @@ startHtml string  =
     div [class "row justify-content-md-center"]
        [ h1 [] [text string]]
    , div [class "row justify-content-md-center"]
-      [ button [onClick END, class "btn btn-outline-primary" ] [text "END"] ]
+      [
+        button [onClick END, class "btn btn-outline-primary" ] [text "END"]
+        ,button [onClick START, class "btn btn-outline-primary" ] [text "ADD"]
+      ]
   ]
 
-body : Model -> Html Msg
+body : Model -> Html msg
 body model =
-   div [] []
+   div []
+      [
+        text "THis Problems"
+        , ul [] (List.map (\prob -> li [] [ text (toString prob.operands) ]) model.problems )
+      ]
+
 
 ---- PROGRAM ----
 
