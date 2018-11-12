@@ -1,9 +1,10 @@
 module Main exposing (..)
 
-import Html exposing (Html, text, div, h1, button, p, br, ul, li)
+import Html exposing (Html, text, div, h1, button, p, br, ul, li, input)
 import Html.Attributes exposing (class)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, onInput)
 import Random
+import Utils exposing (..)
 
 ---- MODEL ----
 
@@ -19,13 +20,14 @@ type alias Problem =
     {
       operands : List String
       , operator : String
+      , answer : String
 
     }
 
 
 buildProblemSet : List Problem
 buildProblemSet =
-    [ {operands = [toString(Random.int 0 9), "456"], operator = "+" }]
+    [ {operands = [toString(Random.int 0 9), "456"], operator = "+", answer = "" }]
 
 
 init : ( Model, Cmd Msg )
@@ -43,6 +45,7 @@ type Msg
     | ADD
     | NewRandom1 Int
     | NewRandom2 Int
+    | CheckAnswer String String
     | END
     | NoOp
 
@@ -59,13 +62,24 @@ update msg model =
 
         NewRandom2 num ->
             let
-               problem =  { operands = [toString model.random1, toString num], operator = "-" }
-               new_problems = problem :: model.problems
+              op1 = model.random1
+              op2 = num
+              result = toString( op1 + op2 )
+              problem =  { operands = [toString op1 , toString num], operator = "-" , answer = result}
+              new_problems = problem :: model.problems
             in
               ({model | problems =  new_problems  } , Cmd.none)
 
         END ->
-           ( { model | state = "END", problems = [] }, Cmd.none)
+            init
+
+        CheckAnswer num1 num ->
+            let
+              ans = num1 == num
+            in
+              Debug.log (toString ans)
+
+            (model, Cmd.none)
 
         _ ->
             (model, Cmd.none)
@@ -121,19 +135,22 @@ startHtml string  =
        [ h1 [] [text string]]
    , div [class "row justify-content-md-center"]
       [
-        button [onClick END, class "btn btn-outline-primary" ] [text "END"]
-        ,button [onClick START, class "btn btn-outline-primary" ] [text "ADD"]
+        button [onClick START, class "btn btn-outline-primary" ] [text "ADD"]
+        ,button [onClick END, class "btn btn-outline-primary" ] [text "END"]
       ]
   ]
 
-body : Model -> Html msg
+body : Model -> Html Msg
 body model =
    div []
       [
         text "THis Problems"
-        , ul [] (List.map (\prob -> li [] [ text (toString prob.operands) ]) model.problems )
+        , ul []
+          (List.map (\prob -> li [class "mt-3"]
+            [ text (renderProblem prob.operands)
+              , input [ onInput (CheckAnswer prob.answer) ] []
+            ]) model.problems )
       ]
-
 
 ---- PROGRAM ----
 
