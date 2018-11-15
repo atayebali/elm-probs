@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import Array exposing (..)
 import Html exposing (Html, text, div, h1, button, p, br, ul, li, input)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick, onInput)
@@ -11,7 +12,7 @@ import Utils exposing (..)
 type alias Model =
     {
       state : String
-      , problems : List Problem
+      , problems : Array Problem
       , random1 : Int
       , random2 : Int
     }
@@ -21,20 +22,15 @@ type alias Problem =
       operands : List String
       , operator : String
       , answer : String
+      , result: String
 
     }
-
-
-buildProblemSet : List Problem
-buildProblemSet =
-    [ {operands = [toString(Random.int 0 9), "456"], operator = "+", answer = "" }]
-
 
 init : ( Model, Cmd Msg )
 init =
     ( {
         state = "NOT STARTED"
-        , problems =  []
+        , problems =  Array.empty
         , random1 = 10000
         , random2 = 20000
          }, Cmd.none )
@@ -42,12 +38,10 @@ init =
 ---- UPDATE ----
 type Msg
     = START
-    | ADD
     | NewRandom1 Int
     | NewRandom2 Int
-    | CheckAnswer String String
+    | CheckAnswer Int String String
     | END
-    | NoOp
 
 
 
@@ -55,7 +49,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         START ->
-          ( { model | state = "STARTED" }, Random.generate NewRandom1 (Random.int 1 9) )
+          ( { model | state = "STARTED"}, Random.generate NewRandom1 (Random.int 1 9) )
 
         NewRandom1 num ->
             ({model | random1 = num} , Random.generate NewRandom2 (Random.int 1 9))
@@ -64,26 +58,32 @@ update msg model =
             let
               op1 = model.random1
               op2 = num
-              result = toString( op1 + op2 )
-              problem =  { operands = [toString op1 , toString num], operator = "-" , answer = result}
-              new_problems = problem :: model.problems
+              eresult = toString( op1 + op2 )
+              problem =  { operands = [toString op1 , toString num], operator = "-" , answer = eresult, result = ""}
+              new_problems = problem :: (Array.toList model.problems)
             in
-              ({model | problems =  new_problems  } , Cmd.none)
+              ({model | problems = Array.fromList new_problems  } , Cmd.none)
 
         END ->
             init
 
-        CheckAnswer num1 num ->
+        CheckAnswer id num1 num ->
             let
-              ans = num1 == num
+              ans =  if (num1 == num) then
+                       "😀"
+                     else
+                       "😞"
             in
-              Debug.log (toString ans)
-
-            (model, Cmd.none)
-
-        _ ->
-            (model, Cmd.none)
-
+              (model.problems
+                |> Array.get id
+                |>Maybe.map
+                  (\p -> {p | result = ans})
+                |> Maybe.map
+                  (\p -> Array.set id p model.problems)
+                |> Maybe.map (\arr -> {model | problems = arr })
+                |> Maybe.withDefault model
+              , Cmd.none
+              )
 
 
 ---- VIEW ----
@@ -146,10 +146,20 @@ body model =
       [
         text "THis Problems"
         , ul []
-          (List.map (\prob -> li [class "mt-3"]
-            [ text (renderProblem prob.operands)
-              , input [ onInput (CheckAnswer prob.answer) ] []
-            ]) model.problems )
+             (model.problems
+              |> Array.indexedMap
+               (\i prob -> li [class "mt-3"]
+                  [
+                    text (renderProblem prob.operands)
+                    , input [ onInput (CheckAnswer i prob.answer) ] []
+                    , text prob.result
+                  ]
+                )
+              |> Array.toList )
+--          (List.map (\prob -> li [class "mt-3"]
+--            [ text (renderProblem prob.operands)
+--              , input [ onInput (CheckAnswer prob.id prob.answer) ] []
+--            ]) model.problems )
       ]
 
 ---- PROGRAM ----
