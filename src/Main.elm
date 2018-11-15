@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Array exposing (..)
 import Html exposing (Html, text, div, h1, button, p, br, ul, li, input)
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (class, placeholder, value)
 import Html.Events exposing (onClick, onInput)
 import Random
 import Utils exposing (..)
@@ -22,6 +22,7 @@ type alias Problem =
       operands : List String
       , operator : String
       , answer : String
+      , userAnswer : String
       , result: String
 
     }
@@ -59,7 +60,7 @@ update msg model =
               op1 = model.random1
               op2 = num
               eresult = toString( op1 + op2 )
-              problem =  { operands = [toString op1 , toString num], operator = "-" , answer = eresult, result = ""}
+              problem =  { operands = [toString op1 , toString num], operator = "-" , answer = eresult, userAnswer = "", result = ""}
               new_problems = problem :: (Array.toList model.problems)
             in
               ({model | problems = Array.fromList new_problems  } , Cmd.none)
@@ -77,7 +78,7 @@ update msg model =
               (model.problems
                 |> Array.get id
                 |>Maybe.map
-                  (\p -> {p | result = ans})
+                  (\p -> {p | result = ans, userAnswer = num})
                 |> Maybe.map
                   (\p -> Array.set id p model.problems)
                 |> Maybe.map (\arr -> {model | problems = arr })
@@ -151,7 +152,7 @@ body model =
                (\i prob -> li [class "mt-3"]
                   [
                     text (renderProblem prob.operands)
-                    , input [ onInput (CheckAnswer i prob.answer) ] []
+                    , input [ value prob.userAnswer, onInput (CheckAnswer i prob.answer) ] [ ]
                     , text prob.result
                   ]
                 )
