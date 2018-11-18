@@ -1,7 +1,5 @@
 module Utils exposing (..)
 
-
-
 fromJust : Maybe String -> String
 fromJust maybe =
     case maybe of
@@ -20,6 +18,6 @@ renderProblem ops =
 
     in
       fromJust op1  ++
-      " + " ++
+      " * " ++
        fromJust op2 ++
        " = "

@@ -15,6 +15,7 @@ type alias Model =
       , problems : Array Problem
       , random1 : Int
       , random2 : Int
+      , index : Int
     }
 
 type alias Problem =
@@ -24,8 +25,11 @@ type alias Problem =
       , answer : String
       , userAnswer : String
       , result: String
-
     }
+
+problemBuilder : Int -> Int-> String -> Problem
+problemBuilder op1 num result =
+    { operands = [toString op1 , toString num], operator = "-" , answer = result, userAnswer = "", result = ""}
 
 init : ( Model, Cmd Msg )
 init =
@@ -34,6 +38,7 @@ init =
         , problems =  Array.empty
         , random1 = 10000
         , random2 = 20000
+        , index = -1
          }, Cmd.none )
 
 ---- UPDATE ----
@@ -50,7 +55,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         START ->
-          ( { model | state = "STARTED"}, Random.generate NewRandom1 (Random.int 1 9) )
+            ( { model | state = "STARTED", index = model.index + 1 }, Random.generate NewRandom1 (Random.int 1 9) )
 
         NewRandom1 num ->
             ({model | random1 = num} , Random.generate NewRandom2 (Random.int 1 9))
@@ -59,8 +64,8 @@ update msg model =
             let
               op1 = model.random1
               op2 = num
-              eresult = toString( op1 + op2 )
-              problem =  { operands = [toString op1 , toString num], operator = "-" , answer = eresult, userAnswer = "", result = ""}
+              eresult = toString( op1 * op2 )
+              problem =  problemBuilder op1 num eresult
               new_problems = problem :: (Array.toList model.problems)
             in
               ({model | problems = Array.fromList new_problems  } , Cmd.none)
@@ -81,7 +86,7 @@ update msg model =
                   (\p -> {p | result = ans, userAnswer = num})
                 |> Maybe.map
                   (\p -> Array.set id p model.problems)
-                |> Maybe.map (\arr -> {model | problems = arr })
+                |> Maybe.map (\arr -> {model | problems = arr, index = model.index + 1 })
                 |> Maybe.withDefault model
               , Cmd.none
               )
@@ -145,18 +150,19 @@ body : Model -> Html Msg
 body model =
    div []
       [
-        text "THis Problems"
-        , ul []
-             (model.problems
-              |> Array.indexedMap
-               (\i prob -> li [class "mt-3"]
-                  [
-                    text (renderProblem prob.operands)
-                    , input [ value prob.userAnswer, onInput (CheckAnswer i prob.answer) ] [ ]
-                    , text prob.result
-                  ]
-                )
-              |> Array.toList )
+        text "This Problems"
+
+--        , ul []
+--             (model.problems
+--              |> Array.indexedMap
+--               (\i prob -> li [class "mt-3"]
+--                  [
+--                    text (renderProblem prob.operands)
+--                    , input [ value prob.userAnswer, onInput (CheckAnswer i prob.answer) ] [ ]
+--                    , h1 [] [text prob.result]
+--                  ]
+--                )
+--              |> Array.toList )
 --          (List.map (\prob -> li [class "mt-3"]
 --            [ text (renderProblem prob.operands)
 --              , input [ onInput (CheckAnswer prob.id prob.answer) ] []
