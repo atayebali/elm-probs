@@ -2,8 +2,9 @@ module Main exposing (..)
 
 import Array exposing (..)
 import Html exposing (Html, text, div, h1, button, p, br, ul, li, input)
-import Html.Attributes exposing (class, placeholder, value)
+import Html.Attributes exposing (class, placeholder, value, type_)
 import Html.Events exposing (onClick, onInput)
+import Html.Events.Extra exposing (onEnter)
 import Random
 import Utils exposing (..)
 
@@ -50,6 +51,10 @@ type Msg
     | CheckAnswer Int String String
     | END
 
+
+shout : Msg -> Msg
+shout msg =
+    msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -119,6 +124,8 @@ view model =
 --        , debugView model
         ]
 
+
+
 debugView : Model -> Html msg
 debugView model =
     div []
@@ -155,10 +162,7 @@ startHtml string  =
     div [class "row justify-content-md-center"]
        [ h1 [] [text string]]
    , div [class "row justify-content-md-center"]
-      [
-        button [onClick START, class "btn btn-outline-primary" ] [text "ADD"]
-        ,button [onClick END, class "btn btn-outline-primary" ] [text "END"]
-      ]
+      [ button [onClick END, class "btn btn-outline-primary" ] [text "END"] ]
   ]
 
 body : Model -> Html Msg
@@ -169,10 +173,13 @@ body model =
     in
      div []
         [
-          text "This Problems"
+          text "Press [ Start ] to beging.  Press [ End ] to Stop.  Hit Enter after answer to continue..."
           ,h1 [class hidden] [
               text <| buildProblem problem model.operator
-              , input [ value problem.userAnswer, onInput (CheckAnswer 0 problem.answer) ][]
+              , input [ type_ "number"
+                        , value problem.userAnswer
+                        , onEnter START
+                        , onInput (CheckAnswer 0 problem.answer) ][]
               , text problem.result
             ]
           ]
