@@ -13,6 +13,7 @@ type alias Model =
     {
       state : String
       , problems : Array Problem
+      , operator : String
       , random1 : Int
       , random2 : Int
       , index : Int
@@ -21,7 +22,6 @@ type alias Model =
 type alias Problem =
     {
       operands : List String
-      , operator : String
       , answer : String
       , userAnswer : String
       , result: String
@@ -29,7 +29,7 @@ type alias Problem =
 
 problemBuilder : Int -> Int-> String -> Problem
 problemBuilder op1 num result =
-    { operands = [toString op1 , toString num], operator = "-" , answer = result, userAnswer = "", result = ""}
+    { operands = [toString op1 , toString num], answer = result, userAnswer = "", result = ""}
 
 init : ( Model, Cmd Msg )
 init =
@@ -38,6 +38,7 @@ init =
         , problems =  Array.empty
         , random1 = 10000
         , random2 = 20000
+        , operator = "+"
         , index = -1
          }, Cmd.none )
 
@@ -64,7 +65,8 @@ update msg model =
             let
               op1 = model.random1
               op2 = num
-              eresult = toString( op1 * op2 )
+              operator = model.operator
+              eresult = toString( calculate op1 operator op2 )
               problem =  problemBuilder op1 num eresult
               new_problems = problem :: (Array.toList model.problems)
             in
@@ -76,9 +78,9 @@ update msg model =
         CheckAnswer id num1 num ->
             let
               ans =  if (num1 == num) then
-                       "😀"
+                       happy num
                      else
-                       "😞"
+                       sad num
             in
               (model.problems
                 |> Array.get id
@@ -91,6 +93,19 @@ update msg model =
               , Cmd.none
               )
 
+calculate: Int -> String -> Int -> Int
+calculate op1 operator op2 =
+    let
+       answer = if operator == "+" then
+          op1 + op2
+        else
+          op1 * op2
+
+     in
+      answer
+
+
+
 
 ---- VIEW ----
 
@@ -101,7 +116,7 @@ view model =
         [
         header model
         , body model
-        , debugView model
+--        , debugView model
         ]
 
 debugView : Model -> Html msg
@@ -148,26 +163,32 @@ startHtml string  =
 
 body : Model -> Html Msg
 body model =
-   div []
-      [
-        text "This Problems"
+    let
+      problem = unwrapProblem <| Array.get(0) model.problems
+      hidden = if model.index < 0 then "d-none" else "blah"
+    in
+     div []
+        [
+          text "This Problems"
+          ,h1 [class hidden] [
+              text <| buildProblem problem model.operator
+              , input [ value problem.userAnswer, onInput (CheckAnswer 0 problem.answer) ][]
+              , text problem.result
+            ]
+          ]
 
---        , ul []
---             (model.problems
---              |> Array.indexedMap
---               (\i prob -> li [class "mt-3"]
---                  [
---                    text (renderProblem prob.operands)
---                    , input [ value prob.userAnswer, onInput (CheckAnswer i prob.answer) ] [ ]
---                    , h1 [] [text prob.result]
---                  ]
---                )
---              |> Array.toList )
---          (List.map (\prob -> li [class "mt-3"]
---            [ text (renderProblem prob.operands)
---              , input [ onInput (CheckAnswer prob.id prob.answer) ] []
---            ]) model.problems )
-      ]
+buildProblem : Problem -> String -> String
+buildProblem problem operator =
+    renderProblem problem.operands operator
+
+
+unwrapProblem : Maybe Problem -> Problem
+unwrapProblem wrappedProblem =
+    case wrappedProblem of
+        Just wrappedProblem ->
+            wrappedProblem
+        Nothing  ->
+             { operands = ["" ,  ""], answer = "", userAnswer = "", result = ""}
 
 ---- PROGRAM ----
 
